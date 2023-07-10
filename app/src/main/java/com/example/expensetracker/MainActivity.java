@@ -1,10 +1,9 @@
 package com.example.expensetracker;
-
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import java.io.BufferedReader;
@@ -18,12 +17,11 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private List<Expense> expenseList;
-    private ExpenseAdapter expenseAdapter;
     private EditText dateEditText;
     private EditText categoryEditText;
     private EditText amountEditText;
     private Button addButton;
-    private ListView expenseListView;
+    private Button viewTableButton;
     private String filename = "expenses.txt";
 
     @Override
@@ -36,19 +34,22 @@ public class MainActivity extends AppCompatActivity {
         categoryEditText = findViewById(R.id.categoryEditText);
         amountEditText = findViewById(R.id.amountEditText);
         addButton = findViewById(R.id.addButton);
-        expenseListView = findViewById(R.id.expenseListView);
+        viewTableButton = findViewById(R.id.viewTableButton);
 
         // Load expenses from file
         expenseList = loadExpenses();
-
-        // Set up the expense adapter
-        expenseAdapter = new ExpenseAdapter(this, expenseList);
-        expenseListView.setAdapter(expenseAdapter);
 
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 addExpense();
+            }
+        });
+
+        viewTableButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openExpenseTable();
             }
         });
     }
@@ -58,7 +59,14 @@ public class MainActivity extends AppCompatActivity {
         String category = categoryEditText.getText().toString();
         String amountString = amountEditText.getText().toString();
 
-        if (date.isEmpty() || category.isEmpty() || amountString.isEmpty()) {
+        // Validate the date format using regex
+        if (!date.matches("^(0[1-9]|[1-2][0-9]|3[0-1])/(0[1-9]|1[0-2])/\\d{4}$")) {
+            Toast.makeText(this, "Please enter a valid date in the format dd/mm/yyyy", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Validate other fields
+        if (category.isEmpty() || amountString.isEmpty()) {
             Toast.makeText(this, "Please enter all fields", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -67,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
         Expense expense = new Expense(date, category, amount);
 
         expenseList.add(expense);
-        expenseAdapter.notifyDataSetChanged();
         saveExpenses();
 
         // Clear input fields
@@ -78,7 +85,9 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Expense added", Toast.LENGTH_SHORT).show();
     }
 
-    /*private void saveExpenses() {
+
+
+    private void saveExpenses() {
         try {
             File file = new File(getFilesDir(), filename);
             FileWriter fw = new FileWriter(file.getAbsoluteFile());
@@ -94,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(this, "Failed to save expenses", Toast.LENGTH_SHORT).show();
         }
-    }*/
+    }
 
     private List<Expense> loadExpenses() {
         List<Expense> expenses = new ArrayList<>();
@@ -124,26 +133,9 @@ public class MainActivity extends AppCompatActivity {
 
         return expenses;
     }
-    private void saveExpenses() {
-        try {
-            File file = new File(getFilesDir(), filename);
-            FileWriter fw = new FileWriter(file);
-            BufferedWriter bw = new BufferedWriter(fw);
 
-            for (Expense expense : expenseList) {
-                String expenseLine = expense.getDate() + "," + expense.getCategory() + "," + expense.getAmount();
-                bw.write(expenseLine);
-                bw.newLine();
-            }
-
-            bw.close();
-
-            Toast.makeText(this, "Expenses saved", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Failed to save expenses", Toast.LENGTH_SHORT).show();
-        }
+    private void openExpenseTable() {
+        Intent intent = new Intent(this, ExpenseTableActivity.class);
+        startActivity(intent);
     }
-
-
 }
